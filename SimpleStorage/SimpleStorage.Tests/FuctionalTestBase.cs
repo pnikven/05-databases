@@ -13,6 +13,7 @@ namespace SimpleStorage.Tests
     {
         private IoCFactory iocFactory;
         protected Container container;
+        protected static bool RunServersFromTests = true;
 
         [TestFixtureSetUp]
         public virtual void TestFixtureSetUp()

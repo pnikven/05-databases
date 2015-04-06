@@ -18,13 +18,16 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
         public override void TestFixtureSetUp()
         {
             base.TestFixtureSetUp();
-            Program.ShouldRunInfinitely = true;
-            var masterTask = new Task(() => Program.Main(new[] { "-p", "16000" }));
-            masterTask.Start();
-            var slave1Task = new Task(() => Program.Main(new[] { "-p", "16001", "--rp", "16000" }));
-            slave1Task.Start();
-            var slave2Task = new Task(() => Program.Main(new[] { "-p", "16002", "--rp", "16000" }));
-            slave2Task.Start();
+            if (RunServersFromTests)
+            {
+                Program.ShouldRunInfinitely = true;
+                var masterTask = new Task(() => Program.Main(new[] {"-p", "16000"}));
+                masterTask.Start();
+                var slave1Task = new Task(() => Program.Main(new[] {"-p", "16001", "--rp", "16000"}));
+                slave1Task.Start();
+                var slave2Task = new Task(() => Program.Main(new[] {"-p", "16002", "--rp", "16000"}));
+                slave2Task.Start();
+            }
         }
 
         [SetUp]
