@@ -12,12 +12,14 @@ namespace SimpleStorage
 {
     public class Program
     {
+        public static bool ShouldRunInfinitely { get; set; }
         public static void Main(string[] args)
         {
             var options = new Options();
+            var iocFactory = new IoCFactory();
             if (Parser.Default.ParseArguments(args, options))
             {
-                var container = IoCFactory.GetContainer();
+                var container = iocFactory.GetContainer();
 
                 var topology = new Topology(options.ReplicasPorts);
                 container.Configure(c => c.For<ITopology>().Use(topology).Singleton());
@@ -29,17 +31,21 @@ namespace SimpleStorage
                 };
                 container.Configure(c => c.For<IConfiguration>().Use(configuration));
 
-                using (WebApp.Start<Startup>(string.Format("http://+:{0}/", options.Port)))
+                var startOptions = new StartOptions(string.Format("http://+:{0}/", options.Port));
+                using (WebApp.Start(startOptions, appBuilder => new Startup(iocFactory).Configuration(appBuilder)))
                 {
                     Console.WriteLine("Server running on port {0}", options.Port);
                     var cts = new CancellationTokenSource();
                     CancellationToken cancellationToken = cts.Token;
-                    var synchronizationTask = IoCFactory.GetContainer().GetInstance<IOperationLogSynchronizer>().Synchronize(cancellationToken);
+                    var synchronizationTask = iocFactory.GetContainer().GetInstance<IOperationLogSynchronizer>().Synchronize(cancellationToken);
                     if (options.ReplicasPorts.Any())
                         Console.WriteLine("Replicas running on ports {0}", string.Join(", ", options.ReplicasPorts));
 
                     if (options.ShardsPorts.Any())
                         Console.WriteLine("Shards running on ports {0}", string.Join(", ", options.ShardsPorts));
+
+                    if (ShouldRunInfinitely)
+                        new ManualResetEvent(false).WaitOne();
 
                     Console.ReadLine();
                     cts.Cancel();

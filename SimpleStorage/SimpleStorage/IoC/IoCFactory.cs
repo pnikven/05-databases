@@ -2,13 +2,13 @@
 
 namespace SimpleStorage.IoC
 {
-    public static class IoCFactory
+    public class IoCFactory
     {
-        private static Container container;
+        private Container container;
 
-        private static readonly object @lock = new object();
+        private readonly object @lock = new object();
 
-        public static Container GetContainer()
+        public Container GetContainer()
         {
             if (container == null)
                 lock (@lock)

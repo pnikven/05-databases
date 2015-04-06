@@ -19,7 +19,7 @@ namespace SimpleStorage.Tests.Controllers
             base.SetUp();
 
             var topology = new Topology(new int[0]);
-            var configuration = new Configuration(topology) {CurrentNodePort = port, OtherShardsPorts = new int[0]};
+            var configuration = new Configuration(topology) { CurrentNodePort = port, OtherShardsPorts = new int[0] };
             container.Configure(c => c.For<IConfiguration>().Use(configuration));
 
             storageClient = new SimpleStorageClient(endpoint);
@@ -30,11 +30,11 @@ namespace SimpleStorage.Tests.Controllers
         public void Read_Always_ShouldReturnAllOperations()
         {
             const string id = "id";
-            var version1 = new Value {Content = "content", IsDeleted = false, Revision = 0};
-            using (WebApp.Start<Startup>(string.Format("http://+:{0}/", port)))
+            var version1 = new Value { Content = "content", IsDeleted = false, Revision = 0 };
+            using (GetStartedWebApp(port))
             {
                 storageClient.Put(id, version1);
-                var version2 = new Value {IsDeleted = true, Revision = 1, Content = "anotherContent"};
+                var version2 = new Value { IsDeleted = true, Revision = 1, Content = "anotherContent" };
                 storageClient.Put(id, version2);
 
                 var actual = operationLogClient.Read(0, 100).ToArray();
@@ -51,11 +51,11 @@ namespace SimpleStorage.Tests.Controllers
         [Test]
         public void Read_WithSeek_ShouldSkip()
         {
-            using (WebApp.Start<Startup>(string.Format("http://+:{0}/", port)))
+            using (GetStartedWebApp(port))
             {
-                storageClient.Put("id1", new Value {Content = "1"});
-                storageClient.Put("id2", new Value {Content = "2"});
-                storageClient.Put("id3", new Value {Content = "3"});
+                storageClient.Put("id1", new Value { Content = "1" });
+                storageClient.Put("id2", new Value { Content = "2" });
+                storageClient.Put("id3", new Value { Content = "3" });
 
                 var actual = operationLogClient.Read(1, 1).ToArray();
 
@@ -66,7 +66,7 @@ namespace SimpleStorage.Tests.Controllers
         [Test]
         public void Read_BigPosition_ShouldReturnEmpty()
         {
-            using (WebApp.Start<Startup>(string.Format("http://+:{0}/", port)))
+            using (GetStartedWebApp(port))
             {
                 var actual = operationLogClient.Read(1000, 1).ToArray();
                 Assert.That(actual.Length, Is.EqualTo(0));

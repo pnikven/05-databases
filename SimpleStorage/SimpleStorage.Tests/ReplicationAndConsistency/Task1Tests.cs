@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using Client;
 using Domain;
 using NUnit.Framework;
@@ -10,9 +11,22 @@ using NUnit.Framework.Constraints;
 namespace SimpleStorage.Tests.ReplicationAndConsistency
 {
     [TestFixture]
-    [Ignore]
+    //[Ignore]
     public class Task1Tests : FuctionalTestBase
     {
+        [TestFixtureSetUp]
+        public override void TestFixtureSetUp()
+        {
+            base.TestFixtureSetUp();
+            Program.ShouldRunInfinitely = true;
+            var masterTask = new Task(() => Program.Main(new[] { "-p", "16000" }));
+            masterTask.Start();
+            var slave1Task = new Task(() => Program.Main(new[] { "-p", "16001", "--rp", "16000" }));
+            slave1Task.Start();
+            var slave2Task = new Task(() => Program.Main(new[] { "-p", "16002", "--rp", "16000" }));
+            slave2Task.Start();
+        }
+
         [SetUp]
         public override void SetUp()
         {
@@ -62,14 +76,14 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
 
         private static Constraint CheckHttpException(HttpStatusCode code)
         {
-            return Is.TypeOf<HttpRequestException>().And.Property("Message").ContainsSubstring(((int) code).ToString());
+            return Is.TypeOf<HttpRequestException>().And.Property("Message").ContainsSubstring(((int)code).ToString());
         }
 
         [Test]
         public void Get_ManyTimes_ShouldWorkWhenReplicasDown()
         {
             string id = Guid.NewGuid().ToString();
-            var value = new Value {Content = "content"};
+            var value = new Value { Content = "content" };
             fullTopologyClient.Put(id, value);
 
             for (int i = 0; i < 100; ++i)
@@ -88,7 +102,7 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
             for (int i = 0; i < 100; ++i)
             {
                 string id = Guid.NewGuid().ToString();
-                var value = new Value {Content = "content"};
+                var value = new Value { Content = "content" };
                 fullTopologyClient.Put(id, value);
             }
         }
@@ -97,7 +111,7 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
         public void Put_OnMaster_ShouldAvailableOnSlaves()
         {
             string id = Guid.NewGuid().ToString();
-            var value = new Value {Content = "content"};
+            var value = new Value { Content = "content" };
             masterClient.Put(id, value);
             Thread.Sleep(2000);
             Value value1 = slave1Client.Get(id);
@@ -107,10 +121,20 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
         }
 
         [Test]
+        public void Put_OnMaster_ShouldAvailableOnMaster()
+        {
+            string id = Guid.NewGuid().ToString();
+            var value = new Value { Content = "content" };
+            masterClient.Put(id, value);
+            Value value1 = masterClient.Get(id);
+            Assert.That(value1.Content, Is.EqualTo("content"));
+        }
+
+        [Test]
         public void Put_OnSlaves_ShouldThrow()
         {
             string id = Guid.NewGuid().ToString();
-            var value = new Value {Content = "content"};
+            var value = new Value { Content = "content" };
             Assert.Throws(CheckHttpException(HttpStatusCode.NotImplemented), () => slave1Client.Put(id, value));
             Assert.Throws(CheckHttpException(HttpStatusCode.NotImplemented), () => slave2Client.Put(id, value));
             masterClient.Put(id, value);
