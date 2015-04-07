@@ -1,15 +1,19 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Client;
 
 namespace SimpleStorage.Infrastructure.Replication
 {
     public class OperationLogSynchronizer : IOperationLogSynchronizer
     {
         private readonly IConfiguration configuration;
+        private readonly IStorage storage;
 
-        public OperationLogSynchronizer(IConfiguration configuration)
+        public OperationLogSynchronizer(IConfiguration configuration, IStorage storage)
         {
             this.configuration = configuration;
+            this.storage = storage;
         }
 
         public Task Synchronize(CancellationToken cancellationToken)
@@ -22,10 +26,21 @@ namespace SimpleStorage.Infrastructure.Replication
         {
             if (configuration.IsMaster)
                 return;
+            var masterEndpoint = string.Format("http://{0}/", configuration.MasterEndpoint);
+            var position = 0;
+            const int operationsToReadCount = 100;
             while (true)
             {
                 token.ThrowIfCancellationRequested();
-                Thread.Sleep(1000);
+                var operationLogClient = new OperationLogClient(masterEndpoint);
+                var operations = operationLogClient.Read(position, operationsToReadCount).ToArray();
+                foreach (var operation in operations)
+                {
+                    storage.Set(operation.Id, operation.Value);
+                }
+                position += operations.Length;
+                if (operations.Length < operationsToReadCount)
+                    Thread.Sleep(1000);
             }
         }
     }

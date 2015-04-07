@@ -21,11 +21,11 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
             if (RunServersFromTests)
             {
                 Program.ShouldRunInfinitely = true;
-                var masterTask = new Task(() => Program.Main(new[] {"-p", "16000"}));
+                var masterTask = new Task(() => Program.Main(new[] { "-p", "16000" }));
                 masterTask.Start();
-                var slave1Task = new Task(() => Program.Main(new[] {"-p", "16001", "--rp", "16000"}));
+                var slave1Task = new Task(() => Program.Main(new[] { "-p", "16001", "--rp", "16000" }));
                 slave1Task.Start();
-                var slave2Task = new Task(() => Program.Main(new[] {"-p", "16002", "--rp", "16000"}));
+                var slave2Task = new Task(() => Program.Main(new[] { "-p", "16002", "--rp", "16000" }));
                 slave2Task.Start();
             }
         }
