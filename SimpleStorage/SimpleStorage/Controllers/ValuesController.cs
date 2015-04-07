@@ -1,5 +1,8 @@
-﻿using System.Net;
+﻿using System;
+using System.Linq;
+using System.Net;
 using System.Web.Http;
+using Client;
 using Domain;
 using SimpleStorage.Infrastructure;
 
@@ -27,18 +30,39 @@ namespace SimpleStorage.Controllers
         // GET api/values/5 
         public Value Get(string id)
         {
-            CheckState();
-            var result = storage.Get(id);
-            if (result == null)
-                throw new HttpResponseException(HttpStatusCode.NotFound);
-            return result;
+            var port = ChooseShardPort(id);
+            if (port == configuration.CurrentNodePort)
+            {
+                CheckState();
+                var result = storage.Get(id);
+                if (result == null)
+                    throw new HttpResponseException(HttpStatusCode.NotFound);
+                return result;
+            }
+            return new SimpleStorageClient(string.Format("http://127.0.0.1:{0}/", port)).Get(id);
         }
 
         // PUT api/values/5
         public void Put(string id, [FromBody] Value value)
         {
-            CheckState();
-            storage.Set(id, value);
+            var port = ChooseShardPort(id);
+            if (port == configuration.CurrentNodePort)
+            {
+                CheckState();
+                storage.Set(id, value);
+            }
+            else
+                new SimpleStorageClient(string.Format("http://127.0.0.1:{0}/", port)).Put(id, value);
+        }
+
+        private int ChooseShardPort(string id)
+        {
+            var allShardPorts = new[] { configuration.CurrentNodePort }
+                .Concat(configuration.OtherShardsPorts.ToList())
+                .OrderBy(x => x)
+                .ToArray();
+            var port = allShardPorts[Math.Abs(id.GetHashCode()) % allShardPorts.Length];
+            return port;
         }
     }
 }
