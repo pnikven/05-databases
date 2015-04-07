@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using CommandLine;
 using CommandLine.Text;
 using Coordinator.IoC;
@@ -8,6 +9,7 @@ namespace Coordinator
 {
     public class Program
     {
+        public static bool ShouldRunInfinitely { get; set; }
         public static void Main(string[] args)
         {
             var options = new Options();
@@ -18,6 +20,10 @@ namespace Coordinator
                 using (WebApp.Start<Startup>(string.Format("http://+:{0}/", options.Port)))
                 {
                     Console.WriteLine("Server running on port {0}", options.Port);
+
+                    if (ShouldRunInfinitely)
+                        new ManualResetEvent(false).WaitOne();
+
                     Console.ReadLine();
                 }
             }

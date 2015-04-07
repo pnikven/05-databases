@@ -6,10 +6,10 @@ namespace SimpleStorage.Tests.Sharding
     [TestFixture]
     public class ShardingTestBase
     {
-        private const bool RunServersFromTests = true;
+        protected const bool RunServersFromTests = true;
 
         [TestFixtureSetUp]
-        public void TestFixtureSetUp()
+        public virtual void TestFixtureSetUp()
         {
             if (RunServersFromTests)
             {

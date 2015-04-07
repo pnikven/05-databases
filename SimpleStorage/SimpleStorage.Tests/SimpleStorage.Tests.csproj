@@ -104,6 +104,10 @@
       <Project>{1C20557A-37CF-41ED-82AC-63B14B8E20E7}</Project>
       <Name>Client</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Coordinator\Coordinator.csproj">
+      <Project>{20bcb9e6-d052-4b66-bb16-9504b4cb8a82}</Project>
+      <Name>Coordinator</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Domain\Domain.csproj">
       <Project>{A46FE6BE-06DA-4580-983D-92347EFA8313}</Project>
       <Name>Domain</Name>

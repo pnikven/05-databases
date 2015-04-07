@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace SimpleStorage.Tests.Sharding
 {
     [TestFixture]
-    //[Ignore]
+    [Ignore]
     public class Task2Tests: ShardingTestBase
     {
         private static readonly string endpoint1 = string.Format("http://127.0.0.1:{0}/", 16000);

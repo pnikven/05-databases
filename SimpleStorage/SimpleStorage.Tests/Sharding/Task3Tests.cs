@@ -6,18 +6,31 @@ using System.Net.Http;
 using Client;
 using Domain;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace SimpleStorage.Tests.Sharding
 {
     [TestFixture]
-    [Ignore]
-    public class Task3Tests
+    //[Ignore]
+    public class Task3Tests : ShardingTestBase
     {
         private static readonly string endpoint1 = string.Format("http://127.0.0.1:{0}/", 16000);
         private static readonly string endpoint2 = string.Format("http://127.0.0.1:{0}/", 16001);
         private static readonly string endpoint3 = string.Format("http://127.0.0.1:{0}/", 16002);
-        private readonly string[] endpoints = {endpoint1, endpoint2, endpoint3};
+        private readonly string[] endpoints = { endpoint1, endpoint2, endpoint3 };
         private SimpleStorageClient client;
+
+        [TestFixtureSetUp]
+        public override void TestFixtureSetUp()
+        {
+            base.TestFixtureSetUp();
+            if (RunServersFromTests)
+            {
+                Coordinator.Program.ShouldRunInfinitely = true;
+                var coordinatorTask = new Task(() => Coordinator.Program.Main(new[] { "-p", "17000", "-c", "3" }));
+                coordinatorTask.Start();
+            }
+        }
 
         [SetUp]
         public void SetUp()
@@ -38,7 +51,7 @@ namespace SimpleStorage.Tests.Sharding
         public void Sharding_EachShard_ShouldNotContainAllData()
         {
             for (var i = 0; i < 100; i++)
-                client.Put(Guid.NewGuid().ToString(), new Value {Content = "content"});
+                client.Put(Guid.NewGuid().ToString(), new Value { Content = "content" });
 
             Assert.That(GetAll(endpoint1).ToArray(), Has.Length.LessThan(100));
             Assert.That(GetAll(endpoint2).ToArray(), Has.Length.LessThan(100));
@@ -49,7 +62,7 @@ namespace SimpleStorage.Tests.Sharding
         public void Sharding_AllShards_ShouldContainSomeData()
         {
             for (var i = 0; i < 100; i++)
-                client.Put(Guid.NewGuid().ToString(), new Value {Content = "content"});
+                client.Put(Guid.NewGuid().ToString(), new Value { Content = "content" });
 
             Assert.That(GetAll(endpoint1).ToArray(), Has.Length.GreaterThan(0));
             Assert.That(GetAll(endpoint2).ToArray(), Has.Length.GreaterThan(0));
@@ -63,7 +76,7 @@ namespace SimpleStorage.Tests.Sharding
             for (var i = 0; i < 100; i++)
             {
                 var id = Guid.NewGuid().ToString();
-                var value = new Value {Content = "content"};
+                var value = new Value { Content = "content" };
                 items.Add(new KeyValuePair<string, Value>(id, value));
                 client.Put(id, value);
             }
