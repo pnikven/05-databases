@@ -51,7 +51,7 @@ namespace SimpleStorage.Controllers
                 if (TryPutToOtherReplica(id, value, replicas.Current))
                     successfulWritesCount++;
             if (successfulWritesCount < quorum)
-                throw new HttpRequestException("Can't write to quorum replicas");
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
         }
 
         private int GetQuorum()
