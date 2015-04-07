@@ -5,13 +5,30 @@ using System.Threading;
 using Client;
 using Domain;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace SimpleStorage.Tests.ReplicationAndConsistency
 {
     [TestFixture]
-    [Ignore]
+    //[Ignore]
     public class Task2Tests : FuctionalTestBase
     {
+        [TestFixtureSetUp]
+        public override void TestFixtureSetUp()
+        {
+            base.TestFixtureSetUp();
+            if (RunServersFromTests)
+            {
+                Program.ShouldRunInfinitely = true;
+                var masterTask = new Task(() => Program.Main(new[] { "-p", "16000", "--rp", "16001,16002" }));
+                masterTask.Start();
+                var slave1Task = new Task(() => Program.Main(new[] { "-p", "16001", "--rp", "16000,16002" }));
+                slave1Task.Start();
+                var slave2Task = new Task(() => Program.Main(new[] { "-p", "16002", "--rp", "16000,16001" }));
+                slave2Task.Start();
+            }
+        }
+
         [SetUp]
         public override void SetUp()
         {
@@ -57,7 +74,7 @@ namespace SimpleStorage.Tests.ReplicationAndConsistency
         public void Get_ManyTimes_ShouldFaultTolerant()
         {
             string id = Guid.NewGuid().ToString();
-            var value = new Value {Content = "content"};
+            var value = new Value { Content = "content" };
             fullTopologyClient.Put(id, value);
 
             for (int i = 0; i < 100; ++i)
