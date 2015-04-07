@@ -37,6 +37,8 @@ namespace SimpleStorage.Controllers
         // PUT api/values/5
         public void Put(string id, [FromBody] Value value)
         {
+            if (!configuration.IsMaster)
+                throw new HttpResponseException(HttpStatusCode.NotImplemented);
             CheckState();
             storage.Set(id, value);
         }
