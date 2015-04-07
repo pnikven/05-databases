@@ -1,7 +1,9 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Client;
+using Domain;
 
 namespace SimpleStorage.Infrastructure.Replication
 {
@@ -9,6 +11,7 @@ namespace SimpleStorage.Infrastructure.Replication
     {
         private readonly IConfiguration configuration;
         private readonly IStorage storage;
+        private const int operationsToReadByTimeCount = 100;
 
         public OperationLogSynchronizer(IConfiguration configuration, IStorage storage)
         {
@@ -28,19 +31,34 @@ namespace SimpleStorage.Infrastructure.Replication
                 return;
             var masterEndpoint = string.Format("http://{0}/", configuration.MasterEndpoint);
             var position = 0;
-            const int operationsToReadCount = 100;
             while (true)
             {
                 token.ThrowIfCancellationRequested();
-                var operationLogClient = new OperationLogClient(masterEndpoint);
-                var operations = operationLogClient.Read(position, operationsToReadCount).ToArray();
-                foreach (var operation in operations)
+
+                Operation[] operations;
+                if (TryReadOperationsFromEndpointLog(masterEndpoint, position, out operations))
                 {
-                    storage.Set(operation.Id, operation.Value);
+                    foreach (var operation in operations)
+                        storage.Set(operation.Id, operation.Value);
+                    position += operations.Length;
                 }
-                position += operations.Length;
-                if (operations.Length < operationsToReadCount)
+                if (operations == null || operations.Length < operationsToReadByTimeCount)
                     Thread.Sleep(1000);
+            }
+        }
+
+        private bool TryReadOperationsFromEndpointLog(string endpoint, int position, out Operation[] operations)
+        {
+            try
+            {
+                var operationLogClient = new OperationLogClient(endpoint);
+                operations = operationLogClient.Read(position, operationsToReadByTimeCount).ToArray();
+                return true;
+            }
+            catch
+            {
+                operations = null;
+                return false;
             }
         }
     }
