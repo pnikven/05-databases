@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 
 namespace SimpleStorage
 {
@@ -8,5 +9,7 @@ namespace SimpleStorage
         int[] OtherShardsPorts { get; }
         bool IsMaster { get; }
         IPEndPoint MasterEndpoint { get; }
+        IEnumerable<IPEndPoint> Replicas { get; }
+
     }
 }

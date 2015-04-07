@@ -1,5 +1,7 @@
-﻿using System.Net;
+﻿using System.Linq;
+using System.Net;
 using System.Web.Http;
+using Client;
 using Domain;
 using SimpleStorage.Infrastructure;
 
@@ -7,8 +9,8 @@ namespace SimpleStorage.Controllers
 {
     public class ValuesController : ApiController
     {
-        private readonly IConfiguration configuration;
         private readonly IStateRepository stateRepository;
+        private readonly IConfiguration configuration;
         private readonly IStorage storage;
 
         public ValuesController(IStorage storage, IStateRepository stateRepository, IConfiguration configuration)
