@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,8 +56,9 @@ namespace SimpleStorage.Infrastructure.Replication
                 operations = operationLogClient.Read(position, operationsToReadByTimeCount).ToArray();
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine("Can't read operations from endpoint {0} log: {1}", endpoint, e.Message);
                 operations = null;
                 return false;
             }

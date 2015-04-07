@@ -27,12 +27,33 @@ namespace Client
 
         public Value Get(string id)
         {
-            var requestUri = endpoints.First() + "api/values/" + id;
-            using (var client = new HttpClient())
-            using (var response = client.GetAsync(requestUri).Result)
+            foreach (var endpoint in endpoints)
             {
-                response.EnsureSuccessStatusCode();
-                return response.Content.ReadAsAsync<Value>().Result;
+                var requestUri = endpoint + "api/values/" + id;
+                Value value;
+                if (TryGetResponse(requestUri, out value))
+                    return value;
+            }
+            throw new HttpRequestException();
+        }
+
+        private static bool TryGetResponse(string requestUri, out Value value)
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                using (var response = client.GetAsync(requestUri).Result)
+                {
+                    response.EnsureSuccessStatusCode();
+                    value = response.Content.ReadAsAsync<Value>().Result;
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Can't get response from {0}", requestUri);
+                value = null;
+                return false;
             }
         }
     }
