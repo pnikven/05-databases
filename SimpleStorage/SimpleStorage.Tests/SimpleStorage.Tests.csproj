@@ -90,6 +90,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReplicationAndConsistency\Task2Tests.cs" />
     <Compile Include="ReplicationAndConsistency\Task1Tests.cs" />
+    <Compile Include="Sharding\ShardingTestBase.cs" />
     <Compile Include="Sharding\Task1Tests.cs" />
     <Compile Include="Sharding\Task2Tests.cs" />
     <Compile Include="Sharding\Task3Tests.cs" />

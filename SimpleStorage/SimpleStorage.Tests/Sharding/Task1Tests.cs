@@ -11,31 +11,14 @@ using System.Threading.Tasks;
 namespace SimpleStorage.Tests.Sharding
 {
     [TestFixture]
-    //[Ignore]
-    public class Task1Tests
+    [Ignore]
+    public class Task1Tests: ShardingTestBase
     {
-        protected static bool RunServersFromTests = true;
-
         private static readonly string endpoint1 = string.Format("http://127.0.0.1:{0}/", 16000);
         private static readonly string endpoint2 = string.Format("http://127.0.0.1:{0}/", 16001);
         private static readonly string endpoint3 = string.Format("http://127.0.0.1:{0}/", 16002);
         private readonly string[] endpoints = { endpoint1, endpoint2, endpoint3 };
         private SimpleStorageClient client;
-
-        [TestFixtureSetUp]
-        public void TestFixtureSetUp()
-        {
-            if (RunServersFromTests)
-            {
-                Program.ShouldRunInfinitely = true;
-                var masterTask = new Task(() => Program.Main(new[] { "-p", "16000", "--sp", "16001,16002" }));
-                masterTask.Start();
-                var slave1Task = new Task(() => Program.Main(new[] { "-p", "16001", "--sp", "16000,16002" }));
-                slave1Task.Start();
-                var slave2Task = new Task(() => Program.Main(new[] { "-p", "16002", "--sp", "16000,16001" }));
-                slave2Task.Start();
-            }
-        }
 
         [SetUp]
         public void SetUp()
