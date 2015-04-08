@@ -32,17 +32,14 @@ namespace SimpleStorage.Controllers
         // GET api/values/5 
         public Value Get(string id)
         {
-            Value result = null;
             var valueComparer = new ValueComparer();
             var quorum = GetQuorum();
             var successfulReadsCount = 0;
-            Value value;
-            if (TryReadFromThisReplica(id, out value))
-            {
-                successfulReadsCount++;
-                result = value;
-            }
+            CheckState();
+            var result = storage.Get(id);
+            successfulReadsCount++;
             var replicas = configuration.Replicas.GetEnumerator();
+            Value value;
             while (successfulReadsCount < quorum && replicas.MoveNext())
                 if (TryReadFromOtherReplica(replicas.Current, id, out value))
                 {
@@ -68,34 +65,7 @@ namespace SimpleStorage.Controllers
             catch (Exception e)
             {
                 value = null;
-                if (ReplicaNotFoundValue(e))
-                    return true;
                 Console.WriteLine("Can't read from {0}: {1}", endpoint.Port, e.Message);
-                return false;
-            }
-        }
-
-        private bool ReplicaNotFoundValue(Exception e)
-        {
-            var expectedHttpResponseException = new HttpResponseException(HttpStatusCode.NotFound);
-            var expectedStatusCode = (int)expectedHttpResponseException.Response.StatusCode;
-            return
-                e.GetType() == typeof(HttpRequestException) &&
-                ((HttpRequestException)e).Message.Contains(expectedStatusCode.ToString());
-        }
-
-        private bool TryReadFromThisReplica(string id, out Value value)
-        {
-            try
-            {
-                CheckState();
-                value = storage.Get(id);
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Can't read from {0}: {1}", configuration.CurrentNodePort, e.Message);
-                value = null;
                 return false;
             }
         }
@@ -105,8 +75,9 @@ namespace SimpleStorage.Controllers
         {
             var quorum = GetQuorum();
             var successfulWritesCount = 0;
-            if (TryPutToThisReplica(id, value))
-                successfulWritesCount++;
+            CheckState();
+            storage.Set(id, value);
+            successfulWritesCount++;
             var replicas = configuration.Replicas.GetEnumerator();
             while (successfulWritesCount < quorum && replicas.MoveNext())
                 if (TryPutToOtherReplica(replicas.Current, id, value))
